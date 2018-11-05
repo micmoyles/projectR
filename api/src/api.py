@@ -3,12 +3,13 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
 import MySQLdb as mdb
-import time, json
+import time, json, os, yaml
 import datetime as dt
 
 app = Flask(__name__)
 api = Api(app)
 data = {}
+
 getQuery = '''
 	select name, dob from users where name = "%s"
 ''' 
@@ -19,15 +20,18 @@ userNotFoundString = '{ "message": "user not found"}'
 timeToBirthdayString = "Hello, %s! Your birthday is in %d days"
 happyBirthday  = "Hello, %s! Happy Birthday!"
 
-#print('Sleeping to allow database-container to initialise.')
-#time.sleep(2)
 
-# when running from a container we cannot use localhost or 127.0.0.1
-# as they reference virtual networks within the container
+def getConfig(cfgpath):
 
-db = mdb.connect( "localhost", "root", "wiarreft" )
-cursor = db.cursor(mdb.cursors.DictCursor)
-cursor.execute( "use projectR" )
+    config = {}
+    if not os.path.exists(cfgpath):
+        if not os.path.exists(os.path.join(CUR_DIR, cfgpath)):
+            raise ValueError("Config file %s is not found!" % cfgpath)
+        cfgpath = os.path.join(CUR_DIR, cfgpath)
+    with open(cfgpath, 'r') as cfgf:
+        config = yaml.load(cfgf.read())
+    return config
+
 
 def isProperData(dobString):
 	try:
@@ -54,6 +58,7 @@ def getDaystoBirthday(dobString):
 
 	return daysToBirthday
 		
+
 
 class User(Resource):
 
@@ -107,5 +112,24 @@ class User(Resource):
 api.add_resource(User, '/hello/<name>','/hello')
 
 if __name__ == '__main__':
+
+	# quick check to see if we're in a container
+	if os.path.exists('settings.yaml'):
+		print('Loading Configs')
+		config = getConfig('settings.yaml')
+		dbHost = config['database']['host']
+		dbUser = config['database']['user']
+		dbPass = config['database']['password']
+	else:
+		# we're in a container
+		print('Sleeping to allow database-container to initialise.')
+		time.sleep(2)
+		dbHost = 'database-container'
+		dbUser = 'lenny'
+		dbPass = '1etM3In'
+
+	db = mdb.connect( dbHost, dbUser, dbPass )
+	cursor = db.cursor(mdb.cursors.DictCursor)
+	cursor.execute( "use projectR" )
 	# when running in a container we must listen on 0.0.0.0 not localhost	
 	app.run(host = '0.0.0.0' , port=5000, debug=True)

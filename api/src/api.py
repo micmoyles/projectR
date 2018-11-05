@@ -1,10 +1,11 @@
 #!/usr/bin/python
-# pip install flask
-# pip install flask-restful
+
 from flask import Flask, request
 from flask_restful import Resource, Api
 import MySQLdb as mdb
-import time
+import time, json
+import datetime as dt
+
 app = Flask(__name__)
 api = Api(app)
 data = {}
@@ -14,9 +15,12 @@ getQuery = '''
 insertQuery = '''
 	replace into users values('%s','%s')
 '''
+userNotFoundString = '{ "message": "user not found"}'
+timeToBirthdayString = "Hello, %s! Your birthday is in %d days"
+happyBirthday  = "Hello, %s! Happy Birthday!"
+
 #print('Sleeping to allow database-container to initialise.')
 #time.sleep(2)
-responseString = "Hello %s!, your birthday is in %d days"
 
 # when running from a container we cannot use localhost or 127.0.0.1
 # as they reference virtual networks within the container
@@ -26,30 +30,56 @@ cursor = db.cursor(mdb.cursors.DictCursor)
 cursor.execute( "use projectR" )
 
 def isProperData(dobString):
-	return True
+	try:
+		res = dt.datetime.strptime(dobString,'%Y-%m-%d').date()
+		return True
+	except ValueError:
+		return False
+
+def getDaystoBirthday(dobString):
 	
-def getDaystoBirthday(birthday):
-	return 10
+	#dob = dt.datetime.strptime(dobString,'%Y-%m-%d').date()
+	dob = dobString
+	today = dt.datetime.today()
+	
+	if (dob.month,dob.day) == (today.month,today.day):
+		daysToBirthday = 0
+	else:
+		todayAsInt = int(today.strftime('%j'))
+		dobAsInt   = int(dob.strftime('%j'))
+		if todayAsInt > dobAsInt:
+			daysToBirthday = 365 - todayAsInt + dobAsInt
+		else:
+			daysToBirthday = dobAsInt - todayAsInt
+
+	return daysToBirthday
+		
 
 class User(Resource):
 
 	
 	def get(self, name):
 		
-		if name in data.keys():
-			return responseString % (name,getDaystoBirthday(data[name]))
-
+		responseDict = {}
 		query = getQuery % name
 		cursor.execute( query )
 		response = cursor.fetchone()
+
 		if not response:
-			return '{ "message": "user not found"}'
-		
+			return json.loads(userNotFoundString)
 		
 		if len(response) > 0 and response['name'].lower() != name.lower():
 			print('Some kind of serious error')
 			return 400
-		return "Hello %s!, your birthday is in %d days" % (name,getDaystoBirthday(response['dob']))
+
+		daysToBirthday = getDaystoBirthday(response['dob'])
+		if daysToBirthday == 0:
+			responseDict['message'] = happyBirthday % name
+		else:
+			responseDict['message'] = timeToBirthdayString % (name,daysToBirthday)
+		
+		# convert dict to json for response
+		return json.loads(json.dumps(responseDict))
 
 
 	def put(self,name):
@@ -63,12 +93,14 @@ class User(Resource):
 			return 400
 		# ensure data is formatted correctly
 		if not isProperData(dob):
+			print('Cannot insert malformatted dob string')
 			return 400
 
 		query = insertQuery % (name,dob)
 		
 		cursor.execute( query )
 		db.commit()
+		return 204
 		
 
 # Create routes

@@ -11,15 +11,23 @@ data = {}
 getQuery = '''
 	select name, dob from users where name = "%s"
 ''' 
-print('Sleeping to allow database-container to initialise.')
-time.sleep(20)
+insertQuery = '''
+	replace into users values('%s','%s')
+'''
+#print('Sleeping to allow database-container to initialise.')
+#time.sleep(2)
 responseString = "Hello %s!, your birthday is in %d days"
+
 # when running from a container we cannot use localhost or 127.0.0.1
 # as they reference virtual networks within the container
-db = mdb.connect( "database-container", "root", "chelsea" )
+
+db = mdb.connect( "localhost", "root", "wiarreft" )
 cursor = db.cursor(mdb.cursors.DictCursor)
 cursor.execute( "use projectR" )
 
+def isProperData(dobString):
+	return True
+	
 def getDaystoBirthday(birthday):
 	return 10
 
@@ -46,14 +54,21 @@ class User(Resource):
 
 	def put(self,name):
 
+		json_data = request.get_json()
+		
+		# ensure we receive expected field
 		try:
-			json_data = request.get_json()
-			dob = json_data['dob']
-			data[name] = dob
-			return 204
-
-		except:
+			dob = json_data['dateOfBirth']	
+		except KeyError:
 			return 400
+		# ensure data is formatted correctly
+		if not isProperData(dob):
+			return 400
+
+		query = insertQuery % (name,dob)
+		
+		cursor.execute( query )
+		db.commit()
 		
 
 # Create routes

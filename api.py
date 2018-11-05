@@ -6,7 +6,6 @@ from flask_restful import Resource, Api
 
 app = Flask(__name__)
 api = Api(app)
-data = {}
 
 
 class User(Resource):
@@ -24,8 +23,8 @@ class User(Resource):
         #    'Name': 'John',
         #    'DOB' : '01-01-1970'
         #}
-	def put(self,input):
-		print input
+	def put(self):
+		pass
 
 # Create routes
 api.add_resource(User, '/hello')

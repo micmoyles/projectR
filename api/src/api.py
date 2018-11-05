@@ -4,14 +4,15 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
 import MySQLdb as mdb
-
+import time
 app = Flask(__name__)
 api = Api(app)
 data = {}
 getQuery = '''
 	select name, dob from users where name = "%s"
 ''' 
-
+print('Sleeping to allow database-container to initialise.')
+time.sleep(20)
 responseString = "Hello %s!, your birthday is in %d days"
 # when running from a container we cannot use localhost or 127.0.0.1
 # as they reference virtual networks within the container

@@ -123,7 +123,7 @@ if __name__ == '__main__':
 	else:
 		# we're in a container
 		print('Sleeping to allow database-container to initialise.')
-		time.sleep(2)
+		time.sleep(10)
 		dbHost = 'database-container'
 		dbUser = 'lenny'
 		dbPass = '1etM3In'

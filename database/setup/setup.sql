@@ -1,4 +1,10 @@
 create database projectR;
-create table projectR.users ( name varchar(30), dob timestamp);
-create user 'reader'@'%' identified by '1canR3ad';
-grant select on projectR.* to 'reader'@'%';
+create table projectR.users ( name varchar(30), dob date, primary key (name));
+create user 'lenny'@'%' identified by '1etM3In';
+grant select,insert on projectR.* to 'lenny'@'%';
+insert into projectR.users values('Bruce',"1958-08-07");
+insert into projectR.users values('Adrian','1957-02-27');
+insert into projectR.users values('Dave','1956-12-23');
+insert into projectR.users values('Steve','1956-03-12');
+insert into projectR.users values('Nicko','1952-06-05');
+insert into projectR.users values('Janick','1957-01-27');

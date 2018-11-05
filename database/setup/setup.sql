@@ -1,7 +1,7 @@
 create database projectR;
 create table projectR.users ( name varchar(30), dob date, primary key (name));
 create user 'lenny'@'%' identified by '1etM3In';
-grant select,insert,delete,replace on projectR.users to 'lenny'@'%';
+grant select,insert,delete on projectR.users to 'lenny'@'%';
 insert into projectR.users values('Bruce',"1958-08-07");
 insert into projectR.users values('Adrian','1957-02-27');
 insert into projectR.users values('Dave','1956-12-23');

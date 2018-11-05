@@ -6,9 +6,9 @@ services:
     volumes:
       - ./database/data:/var/lib/mysql:rw
 #    env_file:
-#      - db-vars.environment 
+#      - db-vars.environment
     ports:
-      - 3306:3306
+      - 3307:3306
 
   api-1-service:
     build: ./api

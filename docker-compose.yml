@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  database-container:
+    build: ./database
+    volumes:
+      - ./database/data:/var/lib/mysql:rw
+#    env_file:
+#      - db-vars.environment 
+    ports:
+      - 3307:3306
+
+  api-1-service:
+    build: ./api
+    ports:
+      - 5001:5000
+    depends_on:
+      - database-container
+
+  api-2-service:
+    build: ./api
+    ports:
+      - 5002:5000
+    depends_on:
+      - database-container
+
+
+  api-3-service:
+    build: ./api
+    ports:
+      - 5003:5000
+    depends_on:
+      - database-container
+
+  load-balancer:
+    build: ./load-balancer
+    volumes:
+      - ./load-balancer:/etc/nginx/sites-enabled/
+    ports:
+      - 5000:5000
+      - 8080:8080
+    links:
+      - api-1-service
+      - api-2-service
+      - api-3-service
+

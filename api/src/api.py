@@ -174,9 +174,6 @@ if __name__ == '__main__':
 		dbUser = 'lenny'
 		dbPass = '1etM3In'
 		debug = False
-
-#	db = mdb.connect( dbHost, dbUser, dbPass, 'projectR' )
-#	cursor = db.cursor(mdb.cursors.DictCursor)
 	
 	# when running in a container we must listen on 0.0.0.0 not localhost	
 	app.run(host = '0.0.0.0' , port=5000, debug=debug)

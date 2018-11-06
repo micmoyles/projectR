@@ -120,6 +120,7 @@ if __name__ == '__main__':
 		dbHost = config['database']['host']
 		dbUser = config['database']['user']
 		dbPass = config['database']['password']
+		debug = True
 	else:
 		# we're in a container
 		print('Sleeping to allow database-container to initialise.')
@@ -127,9 +128,10 @@ if __name__ == '__main__':
 		dbHost = 'database-container'
 		dbUser = 'lenny'
 		dbPass = '1etM3In'
+		debug = False
 
 	db = mdb.connect( dbHost, dbUser, dbPass, 'projectR' )
 	cursor = db.cursor(mdb.cursors.DictCursor)
 	
 	# when running in a container we must listen on 0.0.0.0 not localhost	
-	app.run(host = '0.0.0.0' , port=5000, debug=False)
+	app.run(host = '0.0.0.0' , port=5000, debug=debug)

@@ -73,21 +73,31 @@ def isProperData(dobString):
 	except ValueError:
 		return False
 
-def getDaystoBirthday(dobString):
+def getDaystoBirthday(dob):
 	
-	#dob = dt.datetime.strptime(dobString,'%Y-%m-%d').date()
-	dob = dobString
-	today = dt.datetime.today()
-	
+	today = dt.date.today()
+
+	# needed to accomodate for leapyear
+	numDaysThisYear = int(dt.date(today.year,12,31).strftime('%j'))
+
+	# birthdayThisYear
+	bTY = dt.date(today.year,dob.month,dob.day)
+	# birthdayNextYear - needed to accomodate for leap years
+	bNY = dt.date(today.year + 1,dob.month,dob.day)
+	todayAsInt = int(today.strftime('%j'))
+	bTYAsInt   = int(bTY.strftime('%j'))
+	bNYAsInt   = int(bTY.strftime('%j'))
+		
 	if (dob.month,dob.day) == (today.month,today.day):
 		daysToBirthday = 0
 	else:
-		todayAsInt = int(today.strftime('%j'))
-		dobAsInt   = int(dob.strftime('%j'))
-		if todayAsInt > dobAsInt:
-			daysToBirthday = 365 - todayAsInt + dobAsInt
+
+		# if we have already passed this years birthday we need to use 
+		# the numerical day from next year to accomodate for leap years
+		if todayAsInt > bTYAsInt: 
+			daysToBirthday = numDaysThisYear - todayAsInt + bNYAsInt
 		else:
-			daysToBirthday = dobAsInt - todayAsInt
+			daysToBirthday = bTYAsInt - todayAsInt
 
 	return daysToBirthday
 		

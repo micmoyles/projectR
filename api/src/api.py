@@ -18,7 +18,6 @@ getQuery = '''
 insertQuery = '''
 	replace into users values('%s','%s')
 '''
-userNotFoundString = '{ "message": "user not found"}'
 timeToBirthdayString = "Hello, %s! Your birthday is in %d days"
 happyBirthday  = "Hello, %s! Happy Birthday!"
 
@@ -107,31 +106,23 @@ class User(Resource):
 
 	
 	def get(self, name):
-		
-		#db = mdb.connect( dbHost, dbUser, dbPass, 'projectR' )
-		#cursor = db.cursor(mdb.cursors.DictCursor)
 
 		name = name.lower()
 		responseDict = {}
 		query = getQuery % name
-		#cursor.execute( query )
-		#response = cursor.fetchone()
-		#cursor.close()
-		#db.close()
+
 		code, response = executeDBQuery( query )
 		
 		if code != 0:
 			return BADREQUEST
-		#else:
-		#	return json.loads(userNotFoundString)
 		
 		daysToBirthday = getDaystoBirthday(response['dob'])
+
 		if daysToBirthday == 0:
 			responseDict['message'] = happyBirthday % name
 		else:
 			responseDict['message'] = timeToBirthdayString % (name,daysToBirthday)
 		
-
 		# convert dict to json for response
 		return json.loads(json.dumps(responseDict))
 
@@ -160,17 +151,6 @@ class User(Resource):
 			return int(response) # 204
 		else:
 			return code
-		# db = mdb.connect( dbHost, dbUser, dbPass, 'projectR' )
-		# cursor = db.cursor(mdb.cursors.DictCursor)
-
-		# query = insertQuery % (name,dob)
-		
-		# cursor.execute( query )
-		# db.commit()
-		# cursor.close()
-		# db.close()
-
-		#return 204
 		
 
 # Create routes

@@ -9,6 +9,7 @@ services:
 #      - db-vars.environment
     ports:
       - 3307:3306
+    restart: 'unless-stopped'
 
   api-1-service:
     build: ./api
@@ -16,6 +17,7 @@ services:
       - 5001:5000
     depends_on:
       - database-container
+    restart: 'unless-stopped'
 
   api-2-service:
     build: ./api
@@ -23,7 +25,7 @@ services:
       - 5002:5000
     depends_on:
       - database-container
-
+    restart: 'unless-stopped'
 
   api-3-service:
     build: ./api
@@ -31,11 +33,12 @@ services:
       - 5003:5000
     depends_on:
       - database-container
+    restart: 'unless-stopped'
 
   load-balancer:
+    
     build: ./load-balancer
-    volumes:
-      - ./load-balancer:/etc/nginx/sites-enabled/
+
     ports:
       - 5000:5000
       - 8080:8080
@@ -43,4 +46,5 @@ services:
       - api-1-service
       - api-2-service
       - api-3-service
+    restart: 'unless-stopped'
 

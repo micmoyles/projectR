@@ -42,9 +42,10 @@ def executeDBQuery(query):
 		
 		try:
 			cursor.execute( query )
-			cursor.commit()
+			db.commit()
 			(code,text) = (0,NOCONTENT)
 		except Exception as e:
+			print(e)
 			code = BADREQUEST
 			text  = type(e).__name__
 
@@ -130,11 +131,13 @@ class User(Resource):
 		name = name.lower()
 
 		json_data = request.get_json()
+		print(json_data)
 		
 		# ensure we receive expected field
 		try:
-			dob = json_data['dateOfBirth']	
+			dob = json_data['dateOfBirth']
 		except KeyError:
+			print('KeyError')
 			return BADREQUEST
 		# ensure data is formatted correctly
 		if not isProperData(dob):
@@ -142,6 +145,7 @@ class User(Resource):
 			return BADREQUEST
 
 		code, response = executeDBQuery( insertQuery % (name,dob) )
+		print((code,response))
 		if code == 0:
 			return int(response) # 204
 		else:

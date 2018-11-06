@@ -9,6 +9,8 @@ import datetime as dt
 app = Flask(__name__)
 api = Api(app)
 data = {}
+BADREQUEST = 400
+NOCONTENT  = 204
 
 getQuery = '''
 	select name, dob from users where name = "%s"
@@ -20,6 +22,36 @@ userNotFoundString = '{ "message": "user not found"}'
 timeToBirthdayString = "Hello, %s! Your birthday is in %d days"
 happyBirthday  = "Hello, %s! Happy Birthday!"
 
+def executeDBQuery(query):
+	db = mdb.connect( dbHost, dbUser, dbPass, 'projectR' )
+	cursor = db.cursor(mdb.cursors.DictCursor)
+	query = query.strip()
+
+	if 'select' in query:
+
+		cursor.execute( query )
+		response = cursor.fetchall()
+
+		if len(response) == 1:
+			
+			(code,text)  = (0,response[0])
+		else:
+			(code,text) = (1,'Unexpected DB response')
+
+	elif query.startswith('insert') or query.startswith('replace'):
+		
+		try:
+			cursor.execute( query )
+			cursor.commit()
+			(code,text) = (0,NOCONTENT)
+		except Exception as e:
+			code = BADREQUEST
+			text  = type(e).__name__
+
+	cursor.close()
+	db.close()
+
+	return (code,text)
 
 def getConfig(cfgpath):
 
@@ -65,29 +97,37 @@ class User(Resource):
 	
 	def get(self, name):
 		
+		#db = mdb.connect( dbHost, dbUser, dbPass, 'projectR' )
+		#cursor = db.cursor(mdb.cursors.DictCursor)
+
+		name = name.lower()
 		responseDict = {}
 		query = getQuery % name
-		cursor.execute( query )
-		response = cursor.fetchone()
-
-		if not response:
-			return json.loads(userNotFoundString)
+		#cursor.execute( query )
+		#response = cursor.fetchone()
+		#cursor.close()
+		#db.close()
+		code, response = executeDBQuery( query )
 		
-		if len(response) > 0 and response['name'].lower() != name.lower():
-			print('Some kind of serious error')
-			return 400
-
+		if code != 0:
+			return BADREQUEST
+		#else:
+		#	return json.loads(userNotFoundString)
+		
 		daysToBirthday = getDaystoBirthday(response['dob'])
 		if daysToBirthday == 0:
 			responseDict['message'] = happyBirthday % name
 		else:
 			responseDict['message'] = timeToBirthdayString % (name,daysToBirthday)
 		
+
 		# convert dict to json for response
 		return json.loads(json.dumps(responseDict))
 
 
 	def put(self,name):
+
+		name = name.lower()
 
 		json_data = request.get_json()
 		
@@ -95,17 +135,28 @@ class User(Resource):
 		try:
 			dob = json_data['dateOfBirth']	
 		except KeyError:
-			return 400
+			return BADREQUEST
 		# ensure data is formatted correctly
 		if not isProperData(dob):
 			print('Cannot insert malformatted dob string')
-			return 400
+			return BADREQUEST
 
-		query = insertQuery % (name,dob)
+		code, response = executeDBQuery( insertQuery % (name,dob) )
+		if code == 0:
+			return int(response) # 204
+		else:
+			return code
+		# db = mdb.connect( dbHost, dbUser, dbPass, 'projectR' )
+		# cursor = db.cursor(mdb.cursors.DictCursor)
+
+		# query = insertQuery % (name,dob)
 		
-		cursor.execute( query )
-		db.commit()
-		return 204
+		# cursor.execute( query )
+		# db.commit()
+		# cursor.close()
+		# db.close()
+
+		#return 204
 		
 
 # Create routes
@@ -130,8 +181,8 @@ if __name__ == '__main__':
 		dbPass = '1etM3In'
 		debug = False
 
-	db = mdb.connect( dbHost, dbUser, dbPass, 'projectR' )
-	cursor = db.cursor(mdb.cursors.DictCursor)
+#	db = mdb.connect( dbHost, dbUser, dbPass, 'projectR' )
+#	cursor = db.cursor(mdb.cursors.DictCursor)
 	
 	# when running in a container we must listen on 0.0.0.0 not localhost	
 	app.run(host = '0.0.0.0' , port=5000, debug=debug)

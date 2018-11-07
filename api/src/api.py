@@ -22,6 +22,7 @@ timeToBirthdayString = "Hello, %s! Your birthday is in %d days"
 happyBirthday  = "Hello, %s! Happy Birthday!"
 
 def executeDBQuery(query):
+
 	db = mdb.connect( dbHost, dbUser, dbPass, 'projectR' )
 	cursor = db.cursor(mdb.cursors.DictCursor)
 	query = query.strip()
@@ -110,9 +111,12 @@ class User(Resource):
 		name = name.lower()
 		responseDict = {}
 		query = getQuery % name
+		try:
+			code, response = executeDBQuery( query )
+		except Exception:
+			responseDict['message'] = 'Error Reading from Database'
+			return json.loads(json.dumps(responseDict))
 
-		code, response = executeDBQuery( query )
-		
 		if code != 0:
 			return BADREQUEST
 		
@@ -130,6 +134,7 @@ class User(Resource):
 	def put(self,name):
 
 		name = name.lower()
+		responseDict = {}
 
 		json_data = request.get_json()
 		print(json_data)
@@ -144,9 +149,14 @@ class User(Resource):
 		if not isProperData(dob):
 			print('Cannot insert malformatted dob string')
 			return BADREQUEST
+		try:
+			code, response = executeDBQuery( insertQuery % (name,dob) )	
+		except Exception:
+			responseDict['message'] = 'Error Writing to Database'
+			return json.loads(json.dumps(responseDict))
 
 		code, response = executeDBQuery( insertQuery % (name,dob) )
-		print((code,response))
+		
 		if code == 0:
 			return int(response) # 204
 		else:

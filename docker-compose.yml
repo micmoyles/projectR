@@ -5,8 +5,8 @@ services:
     build: ./database
     volumes:
       - ./database/data:/var/lib/mysql:rw
-#    env_file:
-#      - db-vars.environment
+    env_file:
+      - db-vars.environment
     ports:
       - 3307:3306
     restart: 'unless-stopped'
